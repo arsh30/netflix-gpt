@@ -1,0 +1,49 @@
+- npx create-react-app projectName // it uses webpack bundler to build the project
+- npm start (to start the project)
+- jo page automatically refresh hora hai, it is due to HOT RELOADING
+
+
+Note -> jab new app run krte time warning aaye to run below line:
+npm install --save-dev @babel/plugin-proposal-private-property-in-object
+
+-----------------------------
+
+INSTALL TAILWIND CSS -> GO TO FRAMEWORK GUIDES
+- npm install -D tailwindcss
+- npx tailwindcss init
+
+-   content: [
+    "./src/**/*.{js,jsx,ts,tsx}", // Add this in tailwind.config.js
+  ],
+
+
+- In index.css -> paste this also 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+- Run project -> npm start
+
+-----------------------------------
+
+FEATURES WE WILL BUILT 
+
+STEP 1 -> Always do Planning ki website me kya kya hoga
+- login / signup page
+    - signin form / signup form 
+    - redirect to browse page
+
+- Browse page (only comes after authentication)
+  - Header
+  - Main movie
+      -Trailer in Background
+      - movie titile & description
+      - movie suggestions 
+          - movielist * n 
+
+- Netflix GPT
+  - Search bar
+  - Movie suggestions
+
+------------------------- finish ------------
