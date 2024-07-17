@@ -1,0 +1,8 @@
+src
+  - component folder (Create) -> Login.js
+  - utils folder (create)
+
+
+SETUP ROUTING 
+  - npm i -D react-router-dom
+  - routing in body
