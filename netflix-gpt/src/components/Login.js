@@ -1,69 +1,168 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import Header from "./Header";
+import backGroundImg from "../assets/backgroundBanner.jpg";
+import { checkValidData } from "../utils/validate";
+import { auth } from "../utils/firebase";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
+} from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+import { addUser } from "../utils/userSlice";
+import { useDispatch } from "react-redux";
 
 const Login = () => {
-  const [isSignIn, setIsSignIn] = useState(true);
-  const toggleSignupForm = () => {
-    setIsSignIn(!isSignIn);
+  const [isSignInForm, setIsSignInForm] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const email = useRef(null); // null is initial value
+  const password = useRef(null);
+  const name = useRef(null);
+
+  const handleToggleSigninForm = () => {
+    setIsSignInForm((prev) => !prev);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const message = checkValidData(email.current.value, password.current.value);
+    setErrorMessage(message);
+
+    if (message) {
+      return;
+    }
+
+    // Signin/Signin Login
+    if (!isSignInForm) {
+      createUserWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      )
+        .then((userCredential) => {
+          const user = userCredential.user;
+          console.log("User signed up:", user);
+          // Handle successful sign-up, e.g., redirecting to a welcome page
+          // Note: here we dispatch an action and append the user in the store
+          // but we will not do this, firebase give us utility api
+          // onauthstatechange (manage user in docs), it automatically call whenever the user
+          // signin, signup, signout , whenever any authentication state changes this api will automatically called
+          // so will do state changes within it.
+
+          updateProfile(auth.currentUser, {
+            displayName: name.current.value,
+            photoURL:
+              "https://yt3.googleusercontent.com/ytc/AIdro_lt506YzYB3boXuLsCfTpcyseonCiWQGQ6QJD463sVIIdg=s900-c-k-c0x00ffffff-no-rj",
+          })
+            .then(() => {
+              // So WE HAVE TO WRITE THIS ON ROOT LEVEL.  IE APP.JS OR BODY.JS
+              const { uid, email, displayName, photoURL } = auth.currentUser;
+
+              // Here we update the store
+              dispatch(
+                addUser({
+                  uid: uid,
+                  email: email,
+                  displayName: displayName,
+                  photoURL: photoURL,
+                })
+              );
+
+              navigate("/browse");
+            })
+            .catch((error) => {
+              setErrorMessage(error.message);
+            });
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          setErrorMessage(errorMessage);
+        });
+    } else {
+      signInWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      )
+        .then((userCredential) => {
+          const user = userCredential.user;
+          console.log("User signed in:", user);
+          // Handle successful sign-in, e.g., redirecting to a dashboard
+          navigate("/browse");
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          setErrorMessage(errorMessage);
+        });
+    }
   };
   return (
-    <div>
+    <div
+      className="w-[100%] h-[100vh]"
+      style={{
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${backGroundImg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
       <Header />
 
-      <div className="absolute">
-        <img src="https://assets.nflxext.com/ffe/siteui/vlv3/8728e059-7686-4d2d-a67a-84872bd71025/e90516bd-6925-4341-a6cf-0b9f3d0c140a/IN-en-20240708-POP_SIGNUP_TWO_WEEKS-perspective_WEB_34324b52-d094-482b-8c2a-708dc64c9065_large.jpg" />
-      </div>
-
-      <div className="flex justify-center h-[100vh] items-center">
-        <form className="w-3/12 absolute bg-black p-12 text-white rounded-lg bg-opacity-80">
-          <h1 className="font-bold text-3xl py-4">
-            {isSignIn ? "Sign In" : "Sign Up "}
+      <div className="max-w-[50%] sm:max-w-[25%] p-8 bg-[rgba(0,0,0,0.5)] mx-auto">
+        <form action="" className="grid grid-cols-1 text-white">
+          <h1 className="text-white font-bold text-[20px] mb-4">
+            {isSignInForm ? "Sign in" : "Sign up"}
           </h1>
-
-          {!isSignIn ? (
+          {!isSignInForm ? (
             <input
-              type="name"
-              placeholder="Enter your Full Name"
-              className="p-2 mb-6 w-full bg-gray-700"
+              ref={name}
+              autoComplete="true"
+              type="text"
+              placeholder="Full Name"
+              className="h-[40px] p-[10px] my-2 rounded border-[0.5px] border-[#ccc] bg-[transparent] outline-none mb-3 text-white"
             />
           ) : null}
+          <input
+            autoComplete="true"
+            ref={email}
+            type="text"
+            placeholder="Email Address"
+            className="h-[40px] p-[10px] my-2 rounded border-[0.5px] border-[#ccc] bg-[transparent] outline-none mb-3 text-white"
+          />
 
           <input
-            type="email"
-            placeholder="Enter your Email"
-            className="p-2 mb-6 w-full bg-gray-700"
-          />
-          <input
+            autoComplete="true"
+            ref={password}
             type="password"
-            placeholder="Enter your Password"
-            className="p-2 mb-6 w-full bg-gray-700"
+            placeholder="Password"
+            className="h-[40px] p-[10px] my-2 rounded border-[0.5px] border-[#ccc] bg-[transparent] outline-none mb-4 text-white"
           />
-          <button className="p-2 rounded-lg w-full bg-red-700 font-bold hover:bg-red-800">
-            {isSignIn ? "Sign In" : "Sign Up "}
+
+          {errorMessage ? (
+            <p className="text-red-500 font-bold text-[16px] py-2">
+              {errorMessage}
+            </p>
+          ) : null}
+
+          <button
+            onClick={handleSubmit}
+            className="p-[10px] my-[10px] bg-red-800 rounded-xl text-white cursor-pointer hover:bg-red-900 mb-4"
+          >
+            {isSignInForm ? "Sign in" : "Sign up"}
           </button>
 
-          <p className="py-4">
-            {isSignIn ? (
-              <>
-                New to Netflix?{" "}
-                <span
-                  onClick={() => toggleSignupForm()}
-                  className="cursor-pointer hover:text-red-700 hover:underline transition duration-500 ease-in-out"
-                >
-                  Signup now
-                </span>
-              </>
-            ) : (
-              <>
-                Already User ?{" "}
-                <span
-                  onClick={() => toggleSignupForm()}
-                  className="cursor-pointer hover:text-red-700 hover:underline transition duration-500 ease-in-out"
-                >
-                  Signin now
-                </span>
-              </>
-            )}
+          <p className="text-[14px] mt-4">
+            {isSignInForm ? "New to Netflix?" : "Already a User ?"}{" "}
+            <span
+              onClick={handleToggleSigninForm}
+              className="hover:underline hover:text-red-700 cursor-pointer"
+            >
+              {isSignInForm ? "Signup" : "Sign in"}
+            </span>
           </p>
         </form>
       </div>
@@ -74,6 +173,6 @@ const Login = () => {
 export default Login;
 
 /*
-NOTE -> Whenever we have a large always use FORMIK Library because it is very mandatory to handle all these
+NOTE -> Whenever we have a large fields of form, always use FORMIK Library because it is very mandatory to handle all these
 For React
 */
