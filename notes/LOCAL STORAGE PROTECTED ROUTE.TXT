@@ -1,0 +1,131 @@
+Step 1: Create ProtectedRoute and ProtectedLayout
+
+import React from 'react';
+import { Navigate, Outlet } from 'react-router-dom';
+
+// Mock authentication check function (replace with actual logic)
+const checkAuth = () => { 
+  const user = localStorage.getItem('user'); // Replace this with your actual auth logic
+  return user ? JSON.parse(user) : null;
+};
+
+// ProtectedRoute: Protects individual routes (used inside ProtectedLayout)
+const ProtectedRoute = ({ children }) => { // THIS WILL USED WHEN WE WANT TO PROTECT A SINGLE ROUTE
+  const user = checkAuth();
+
+  if (!user) {
+    return <Navigate to="/" />; // Redirects to login if not authenticated
+  }
+
+  return children; // Renders the protected content if authenticated
+};
+
+// ProtectedLayout: Protects all nested routes
+const ProtectedLayout = () => {
+  const user = checkAuth();
+
+  if (!user) {
+    return <Navigate to="/" />; // Redirects to login if not authenticated
+  }
+
+  return <Outlet />; // Outlet renders the nested routes
+};
+
+export { ProtectedRoute, ProtectedLayout };
+
+
+-------------------
+
+Step 2: Set Up the Router with ProtectedLayout
+
+import React from 'react';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { ProtectedLayout } from './ProtectedRoute'; // Import ProtectedLayout
+import Login from './Login'; // Import your Login component
+import Browse from './Browse'; // Import your Browse component
+import Profile from './Profile'; // Import your Profile component
+import Settings from './Settings'; // Import your Settings component
+
+const appRouter = createBrowserRouter([
+  {
+    path: "/",
+    element: <Login />, // Public route
+  },
+  {
+    path: "/",
+    element: <ProtectedLayout />, // Protects all nested routes
+    children: [
+      {
+        path: "browse",
+        element: <Browse />, // Protected route
+      },
+      {
+        path: "profile",
+        element: <Profile />, // Protected route
+      },
+      {
+        path: "settings",
+        element: <Settings />, // Protected route
+      },
+      // Add more protected routes as needed
+    ],
+  },
+]);
+
+const App = () => {
+  return <RouterProvider router={appRouter} />;
+};
+
+export default App;
+
+
+----------------------------------
+
+3. login.js and Header.js ->>
+
+// Login.js
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+
+const Login = () => {
+  const navigate = useNavigate();
+
+  const handleLogin = () => {
+    // Mock login logic (replace with actual login logic)
+    localStorage.setItem('user', JSON.stringify({ name: 'John Doe' }));
+
+    navigate('/browse'); // Navigate to a protected route after login
+  };
+
+  return (
+    <div>
+      <h1>Login Page</h1>
+      <button onClick={handleLogin}>Login</button>
+    </div>
+  );
+};
+
+export default Login;
+
+// Header.js (for logout)
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+
+const Header = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('user'); // Clear user from localStorage
+    navigate('/'); // Redirect to login page
+  };
+
+  return (
+    <header>
+      <button onClick={handleLogout}>Logout</button>
+    </header>
+  );
+};
+
+export default Header;
+
+----------------------- FINISH --------------

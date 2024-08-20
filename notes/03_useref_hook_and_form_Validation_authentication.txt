@@ -1,0 +1,453 @@
+useref hook -> that allows you reference a value thats not needed for rendering
+basically it gives you the reference where you have used
+
+useref is used to reference a field/tag (input tag, button)
+usestate is used to store the data
+
+-------------------
+
+FOR AUTEHTICATION - WE ARE USING FIREBASE (lot of startup use firebase itself), isse app ko production pr bhi lele jaa sakte hai 
+
+Add firebase to web -> register app -> use firebase as HOSTING (means firebase par deploy krna hai to tick krege)
+currently in this project we are doing, 
+
+Add firebase SDK - npm install firebase
+Add Configuration - (To connect our code with firebase)
+  // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyAom2armn7DmUv8RjBxdoEt1PuqGsSh2uc",
+  authDomain: "netflixgpt-ebd3e.firebaseapp.com",
+  projectId: "netflixgpt-ebd3e",
+  storageBucket: "netflixgpt-ebd3e.appspot.com",
+  messagingSenderId: "456704799189",
+  appId: "1:456704799189:web:cb8c26a879d60c22d48d5c",
+  measurementId: "G-KBZN851ZYN"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+----------------
+
+B) Now we want only Authentication 
+- click on Authentication -> Sign in method -> EMAIL/PASSWORD (isme google se bhi hai) usko "ENABLE krlege"
+NOTE: IF error comes, remove CORS Extension (TURN IT OFF)
+
+Now we can register User also , Jo bhi user register honge, web par , to vo users Tab me aayege
+inside Authentication Tab
+
+Now we have enable email password Authentication
+
+-------------------
+
+C) DEPLOY ON FIREBASE
+ - RUN : npm install -g firebase-tools
+ - RUN : firebase login -> If any user comes run firebase logout", then try firebase login (with our gmail account)
+ - firebase init (it will create firebase config file)
+      There are multiple options 
+        1. set up github action deployes (as soon as push the code to github it goes live when merge with main branch)
+        2. or run the firebase deploy (1st option) - means control is in our hands [CHOOSE THIS Configure files for Firebase Hosting and (optionally) set up GitHub Action deploys]
+        -> To select the option (press the space bar and then enter)
+        -> create existing firebase project (vo sare aajayege jo already published hai) -> Choose Netflix Gpt (current project)
+        -> What do you want to use as your public directory? [build folder]
+        because build folder -> all the production ready files goes there
+
+        -> Configure as a single-page app (rewrite all urls to /index.html)? (NO)
+        -> Set up automatic builds and deploys with GitHub? (No)
+
+NOW THIS WILL CREATE FEW CONFIGURATION FOR OUS 
+- It created few files - .firebaserc, firebase.json, 
+
+NOW IF WE WANT TO DEPLOY MY PROJECT 
+- So first run build command - npm run build (It will create optimized production ready app)
+- created a build folder (means we are telling firebase that you have to deploye using this folder)
+- Now deploy this -> "firebase deploy"
+- Now our website deploye successfully -> https://netflixgpt-ebd3e.web.app
+
+========================================================
+
+1. CREATE SIGNUP USER ACCOUNT / SIGNIN (1ST Authentication)
+
+- firebase docs -> search firebase Authentication -> web -> password Authentication 
+- create password based account (always used web modular apis) [web namespace api pehle use hoti thi]
+
+note: 
+whenever we see any API in the firebase, auth (getauth) is required in Every api, 
+so we handle this once on a central place
+so in firebase.js -> put this here -> export const auth = getAuth();
+
+CODE IS IN HANDLESUBMIT FUNCTION:
+
+=========================================================
+
+2. NOW THE PUT THE USER INFORMATION THAT WE GET INTO THE REDUX STORE. 
+SO SETUP THE REDUX STORE. 
+
+- npm i -D @reduxjs/toolkit react-redux
+
+2.1) create Redux Store in utils file ->
+2.2) create a User Slice.js 
+2.3) add slice into the store.js 
+2.4) providing the store from App.js
+
+
+Now i want to update the store , as soon as user signin and signup 
+
+
+==================== CODE =====================
+
+1. App.js -> 
+
+import React from "react";
+import Body from "./components/Body";
+import { Provider } from "react-redux";
+import appStore from "./utils/appStore";
+
+const App = () => {
+  return (
+    <Provider store={appStore}>
+      <Body />
+    </Provider>
+  );
+};
+
+export default App;
+
+-------------------
+
+2. Body.js ->
+
+import React, { useEffect } from "react";
+import Login from "./Login";
+import Browse from "./Browse";
+import { createBrowserRouter } from "react-router-dom";
+import { RouterProvider } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../utils/firebase";
+import { useDispatch } from "react-redux";
+import { addUser, removeUser } from "../utils/userSlice";
+
+const Body = () => {
+  const dispatch = useDispatch();
+  const appRouter = createBrowserRouter([
+    {
+      path: "/",
+      element: <Login />,
+    },
+    {
+      path: "/browse",
+      element: <Browse />,
+    },
+  ]);
+
+  useEffect(() => {
+    onAuthStateChanged(auth, (user) => { // This firebase function will automatically call whenever any Authentication part changes like signup, signin, forgetpassword, resetpassword etc
+      if (user) {
+        // user is signin/signup this if will be called
+        const { uid, email, displayName, photoURL } = user;
+
+        // Here we update the store
+        dispatch(
+          addUser({
+            uid: uid,
+            email: email,
+            displayName: displayName,
+            photoURL: photoURL,
+          })
+        );
+        // navigate("/browse"); here we are not able to able navigate because it is outside the
+        // router provider, so uske andr jo child hai udr se krwana pdhega ie Login
+      } else {
+        // when user is signout this is called automatically
+        dispatch(removeUser());
+        // navigate("/");
+      }
+    });
+  }, []);
+  return (
+    <div>
+      <RouterProvider router={appRouter} />
+    </div>
+  );
+};
+
+export default Body;
+
+---------------------------
+
+3. Login.js ->
+
+import React, { useRef, useState } from "react";
+import Header from "./Header";
+import backGroundImg from "../assets/backgroundBanner.jpg";
+import { checkValidData } from "../utils/validate";
+import { auth } from "../utils/firebase";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
+} from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+import { addUser } from "../utils/userSlice";
+import { useDispatch } from "react-redux";
+
+const Login = () => {
+  const [isSignInForm, setIsSignInForm] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const email = useRef(null); // null is initial value
+  const password = useRef(null);
+  const name = useRef(null);
+
+  const handleToggleSigninForm = () => {
+    setIsSignInForm((prev) => !prev);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const message = checkValidData(email.current.value, password.current.value);
+    setErrorMessage(message);
+
+    if (message) {
+      return;
+    }
+
+    // Signin/Signin Login
+    if (!isSignInForm) {
+      createUserWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      )
+        .then((userCredential) => {
+          const user = userCredential.user;
+          console.log("User signed up:", user);
+          // Handle successful sign-up, e.g., redirecting to a welcome page
+          // Note: here we dispatch an action and append the user in the store
+          // but we will not do this, firebase give us utility api
+          // onauthstatechange (manage user in docs), it automatically call whenever the user
+          // signin, signup, signout , whenever any authentication state changes this api will automatically called
+          // so will do state changes within it.
+
+          updateProfile(auth.currentUser, {
+            displayName: name.current.value,
+            photoURL:
+              "https://yt3.googleusercontent.com/ytc/AIdro_lt506YzYB3boXuLsCfTpcyseonCiWQGQ6QJD463sVIIdg=s900-c-k-c0x00ffffff-no-rj",
+          })
+            .then(() => {
+              // So WE HAVE TO WRITE THIS ON ROOT LEVEL.  IE APP.JS OR BODY.JS
+              const { uid, email, displayName, photoURL } = auth.currentUser;
+
+              // Here we update the store, because on the first time, displau name and photourl not updating.
+              dispatch(
+                addUser({
+                  uid: uid,
+                  email: email,
+                  displayName: displayName,
+                  photoURL: photoURL,
+                })
+              );
+
+              navigate("/browse");
+            })
+            .catch((error) => {
+              setErrorMessage(error.message);
+            });
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          setErrorMessage(errorMessage);
+        });
+    } else {
+      signInWithEmailAndPassword(
+        auth,
+        email.current.value,
+        password.current.value
+      )
+        .then((userCredential) => {
+          const user = userCredential.user;
+          console.log("User signed in:", user);
+          // Handle successful sign-in, e.g., redirecting to a dashboard
+          navigate("/browse");
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          setErrorMessage(errorMessage);
+        });
+    }
+  };
+  return (
+    <div
+      className="w-[100%] h-[100vh]"
+      style={{
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(${backGroundImg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      <Header />
+
+      <div className="max-w-[50%] sm:max-w-[25%] p-8 bg-[rgba(0,0,0,0.5)] mx-auto">
+        <form action="" className="grid grid-cols-1 text-white">
+          <h1 className="text-white font-bold text-[20px] mb-4">
+            {isSignInForm ? "Sign in" : "Sign up"}
+          </h1>
+          {!isSignInForm ? (
+            <input
+              ref={name}
+              autoComplete="true"
+              type="text"
+              placeholder="Full Name"
+              className="h-[40px] p-[10px] my-2 rounded border-[0.5px] border-[#ccc] bg-[transparent] outline-none mb-3 text-white"
+            />
+          ) : null}
+          <input
+            autoComplete="true"
+            ref={email}
+            type="text"
+            placeholder="Email Address"
+            className="h-[40px] p-[10px] my-2 rounded border-[0.5px] border-[#ccc] bg-[transparent] outline-none mb-3 text-white"
+          />
+
+          <input
+            autoComplete="true"
+            ref={password}
+            type="password"
+            placeholder="Password"
+            className="h-[40px] p-[10px] my-2 rounded border-[0.5px] border-[#ccc] bg-[transparent] outline-none mb-4 text-white"
+          />
+
+          {errorMessage ? (
+            <p className="text-red-500 font-bold text-[16px] py-2">
+              {errorMessage}
+            </p>
+          ) : null}
+
+          <button
+            onClick={handleSubmit}
+            className="p-[10px] my-[10px] bg-red-800 rounded-xl text-white cursor-pointer hover:bg-red-900 mb-4"
+          >
+            {isSignInForm ? "Sign in" : "Sign up"}
+          </button>
+
+          <p className="text-[14px] mt-4">
+            {isSignInForm ? "New to Netflix?" : "Already a User ?"}{" "}
+            <span
+              onClick={handleToggleSigninForm}
+              className="hover:underline hover:text-red-700 cursor-pointer"
+            >
+              {isSignInForm ? "Signup" : "Sign in"}
+            </span>
+          </p>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default Login;
+
+/*
+NOTE -> Whenever we have a large fields of form, always use FORMIK Library because it is very mandatory to handle all these
+For React
+*/
+
+
+----------------
+
+3. utils file -> (HELPER FILES)
+
+1. appStore.js ->
+import { configureStore } from "@reduxjs/toolkit";
+import userReducer from "./userSlice";
+const appStore = configureStore({
+  reducer: {
+    // this reducer will have different reducer from different slices
+    user: userReducer,
+  },
+});
+
+export default appStore;
+
+2. firebase cnofig.js ->
+
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+import { getAuth } from "firebase/auth";
+
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyAom2armn7DmUv8RjBxdoEt1PuqGsSh2uc",
+  authDomain: "netflixgpt-ebd3e.firebaseapp.com",
+  projectId: "netflixgpt-ebd3e",
+  storageBucket: "netflixgpt-ebd3e.appspot.com",
+  messagingSenderId: "456704799189",
+  appId: "1:456704799189:web:cb8c26a879d60c22d48d5c",
+  measurementId: "G-KBZN851ZYN",
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+export const auth = getAuth();
+export default app;
+
+
+3. userSlice.js ->
+import { createSlice } from "@reduxjs/toolkit";
+
+const userSlice = createSlice({
+  name: "user",
+  initialState: null,
+  reducers: {
+    // as soon as we login, this addUser (Reducer fun) will be called
+    addUser: (state, action) => {
+      return action.payload;
+    },
+
+    removeUser: (state, action) => {
+      // when we click on signout then this action called
+      return null;
+    },
+  },
+});
+
+export const { addUser, removeUser } = userSlice.actions;
+export default userSlice.reducer;
+
+
+4. validate.js ->
+
+export const checkValidData = (email, password) => {
+  // we are using regex
+  const isEmailValid = /^([a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/.test(email);
+  const isPasswordValid = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password); // this return true or false
+
+  if (!isEmailValid) {
+    return "Email id is not valid";
+  }
+  if (!isPasswordValid) {
+    return "Password is not valid";
+  }
+  return null; // means no error
+};
+
+------------------- FINISH --------------

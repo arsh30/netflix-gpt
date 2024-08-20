@@ -1,0 +1,93 @@
+Fixing bugs: 
+Protecting Route: 
+
+means when we are loggedIn page. then we can navigate to browse page through url Which is wrong 
+and if user is already signin , then it always go to browse page, currently it is navigating to login page which is wrong 
+
+----------
+
+Sol. currently onAuthStateChanged api is present inside the body component, which load on the first time
+and there we are not accessing the navigate prop because it is outside of the routes 
+so the header component is present on every page
+so the useEffect run every time when the header loads, and this authentication will work also. 
+
+const Header = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const user = useSelector((store) => store.user);
+  const handleLogout = () => {
+    signOut(auth)
+      .then(() => {
+        // Sign-out successful.
+        // navigate("/");
+        // action is dispatch automatically from the body.js code onauthstatechange
+      })
+      .catch((error) => {
+        // An error happened.
+        navigate("/error");
+      });
+  };
+
+  useEffect(() => {
+    const UnSubscribe = onAuthStateChanged(auth, (user) => {
+      // It is like a event listener so we have to unsubscribe this when component unmount
+      if (user) {
+        // user is signin/signup this if will be called
+        const { uid, email, displayName, photoURL } = user;
+
+        // Here we update the store
+        dispatch(
+          addUser({
+            uid: uid,
+            email: email,
+            displayName: displayName,
+            photoURL: photoURL,
+          })
+        );
+        // navigate("/browse"); here we are not able to able navigate because it is outside the
+        // router provider, so uske andr jo child hai udr se krwana pdhega ie Login
+
+        navigate("/browse");
+      } else {
+        // user is signout this is called
+        dispatch(removeUser());
+        navigate("/");
+      }
+    });
+
+    return () => {
+      // because header can be load mulitple time in a single session,
+      // so it is like a event listner , so we have to remove this also
+      // when component unmounts
+      UnSubscribe();
+    };
+  }, []);
+  return (
+    <div className="px-12 w-[100%] py-6 bg-gradient-to-b from-black flex items-center justify-between">
+      <img src={LOGO} className="w-44" alt="logo" />
+
+      {user ? (
+        <div className="flex items-center">
+          <img alt="signout icon" className="w-12" src={user?.photoURL} />
+          <button
+            onClick={handleLogout}
+            className="ml-2 hover:underline hover:text-red-950 text-red-800 font-bold"
+          >
+            Sign out
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
+========================== BROWSE PAGE (USING TMDB MOVIE DATABASE) ====================
+
+go to TMDB -> ONCE LOGIN -> EDIT PROFILE -> API -> (CREATE A APP) THAT WILL GIVE YOU THE API KEY (COPY) AND COPY ACCESS TOKEN 
+
+- open tmdb doc -> api reference -> There are many api's over there, so we are using movieList apis 
+  - now playing movie api (which is for most recent movies) copy api link and make sure authroization token also copy which we 
+    generated 
+    
+  - 
