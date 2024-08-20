@@ -11,6 +11,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { addUser } from "../utils/userSlice";
 import { useDispatch } from "react-redux";
+import { PHOTO_URL } from "../utils/constants";
 
 const Login = () => {
   const [isSignInForm, setIsSignInForm] = useState(true);
@@ -44,7 +45,7 @@ const Login = () => {
       )
         .then((userCredential) => {
           const user = userCredential.user;
-          console.log("User signed up:", user);
+          // console.log("User signed up:", user);
           // Handle successful sign-up, e.g., redirecting to a welcome page
           // Note: here we dispatch an action and append the user in the store
           // but we will not do this, firebase give us utility api
@@ -54,8 +55,7 @@ const Login = () => {
 
           updateProfile(auth.currentUser, {
             displayName: name.current.value,
-            photoURL:
-              "https://yt3.googleusercontent.com/ytc/AIdro_lt506YzYB3boXuLsCfTpcyseonCiWQGQ6QJD463sVIIdg=s900-c-k-c0x00ffffff-no-rj",
+            photoURL: PHOTO_URL,
           })
             .then(() => {
               // So WE HAVE TO WRITE THIS ON ROOT LEVEL.  IE APP.JS OR BODY.JS
@@ -70,8 +70,7 @@ const Login = () => {
                   photoURL: photoURL,
                 })
               );
-
-              navigate("/browse");
+              // navigate("/browse");
             })
             .catch((error) => {
               setErrorMessage(error.message);
@@ -90,9 +89,9 @@ const Login = () => {
       )
         .then((userCredential) => {
           const user = userCredential.user;
-          console.log("User signed in:", user);
+          // console.log("User signed in:", user);
           // Handle successful sign-in, e.g., redirecting to a dashboard
-          navigate("/browse");
+          // navigate("/browse");
         })
         .catch((error) => {
           const errorCode = error.code;
