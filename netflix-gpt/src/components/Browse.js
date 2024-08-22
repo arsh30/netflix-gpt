@@ -6,6 +6,8 @@ import SecondaryContainer from "./SecondaryContainer";
 import usePopularMovies from "../hooks/usePopularMovies";
 import useTrendingMovies from "../hooks/useTrendingMovies";
 import useUpComingMovies from "../hooks/useUpComingMovies";
+import GPTSearch from "./GPTSearch";
+import { useSelector } from "react-redux";
 
 const Browse = () => {
   // Current this we are FETCHING FROM TMDB API AND UPDATE STORE, BELOW FUNCTION IS RESPONSIBLE
@@ -28,7 +30,7 @@ const Browse = () => {
     getNowPlayingMovies();
   }, []);
   */
-
+  const showGPTSearch = useSelector((store) => store.gpt?.showGptSearch);
   useNowPlayingMovies();
   usePopularMovies();
   useTrendingMovies();
@@ -37,9 +39,14 @@ const Browse = () => {
   return (
     <div>
       <Header />
-
-      <MainContainer />
-      <SecondaryContainer />
+      {showGPTSearch ? (
+        <GPTSearch />
+      ) : (
+        <>
+          <MainContainer />
+          <SecondaryContainer />
+        </>
+      )}
 
       {/* 
       So its ui is complex - so we will divided it into 2 parts
