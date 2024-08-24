@@ -1,0 +1,12 @@
+we are using gpt apis to search for the movies recommendation (GPT FEATURE)
+
+Goto - platform.openai.com (same account which is use by CHATGPT)
+     - click on user icon (personal) -> view api key -> create a new secret key 
+     - copy and paste to constant file
+     - These API are paid 
+     - Install library - npm i openai (this gives you helper function that will directly call the apis)
+
+    Note: for certain period of time its free, after that we have to pay for this 
+    It will not allow to make you api call unless you start your billing cycle
+
+    

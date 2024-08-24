@@ -1,0 +1,32 @@
+suppose ek page par jaa rhe hai and wapas iss page par aa rahe toh API call ho rahi hai 
+jabki need hi nahi hai store me data already present to why we are hiting the API again and again 
+so here memoization comes:
+
+
+so how we can do this: 
+hum sara data store me save krre hai, and api call krne se pehle dekh lege 
+ki agr store me data nahi hai toh Api call krege
+
+
+const useNowPlayingMovies = () => {
+  const dispatch = useDispatch();
+  const nowPlayinngMovies = useSelector(
+    (store) => store.movies.nowPlayingMovies
+  );
+  const getNowPlayingMovies = async () => {
+    const data = await fetch(
+      "https://api.themoviedb.org/3/movie/now_playing?page=1",
+      API_OPTIONS
+    );
+    const json = await data.json();
+    // console.log(json.results);
+    // put this movie data in the Redux Store
+    dispatch(addNowPlayingMovies(json.results));
+  };
+
+  useEffect(() => {
+    if (!nowPlayinngMovies) {
+      getNowPlayingMovies();
+    }
+  }, []);
+};
