@@ -10,8 +10,7 @@ export const API_OPTIONS = {
   method: "GET",
   headers: {
     accept: "application/json",
-    Authorization:
-      "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0OTFjODU2MjFkYzMzYTM3NTE1ZDg2YzllOWYwYjNlNiIsIm5iZiI6MTcyNDAxMTI2OS4xMTMxMTUsInN1YiI6IjYyMDc3YzhiZWI3OWMyMDBlNmIwNWEwNiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.Uh1r7zY-snHmjKLwel5Yd-XzGm5fjMjZf48K3_9MXKo",
+    Authorization: "Bearer " + process.env.REACT_APP_TMDB_KEY,
   },
 };
 
@@ -31,3 +30,5 @@ export const supportedLang = [
     name: "Hindi",
   },
 ];
+
+export const OPENAI_API_KEY = process.env.REACT_APP_OPENAI_KEY; // This Key should Present Inside the .Env file, so that it wont go on the frontend
